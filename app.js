@@ -1,12 +1,21 @@
-const express = require('express');
-const exphbs = require('express-handlebars');
+const path = require('path');
+const express = require('express'); // Create the node server and helps with petitions
+const exphbs = require('express-handlebars'); // Template system
 const session = require('express-session');
 const flash = require('connect-flash');
 const methodOverride = require('method-override');
 const bodyParser = require('body-parser');
-const mongoose = require('mongoose');
+const passport = require('passport');
+const mongoose = require('mongoose'); // Helps with mongoDB
 
 const app = express();
+
+// Load routes
+const ideas = require('./routes/ideas');
+const users = require('./routes/users');
+
+// Passport config
+require('./config/passport')(passport);
 
 // Connect to mongoose
 mongoose.connect('mongodb://localhost/vidjot-dev', {
@@ -15,9 +24,11 @@ mongoose.connect('mongodb://localhost/vidjot-dev', {
   .then(() => console.log('MongoDB Connected...'))
   .catch(err => console.error(err));
 
-// Load idea model
-require('./models/Idea');
-const Idea = mongoose.model('ideas');
+
+
+//////////////////////////////////
+///////// MIDDLEWARE /////////////
+//////////////////////////////////
 
 // Handlebars middleware
 app.engine('handlebars', exphbs({
@@ -29,6 +40,9 @@ app.set('view engine', 'handlebars');
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
+// Static folder
+app.use(express.static(path.join(__dirname, 'public')));
+
 // Method-override middleware
 app.use(methodOverride('_method'));
 
@@ -39,6 +53,10 @@ app.use(session({
   saveUninitialized:true
 }))
 
+// Passport middleware
+app.use(passport.initialize());
+app.use(passport.session());
+
 // Flash middleware
 app.use(flash());
 
@@ -47,9 +65,18 @@ app.use((req,res,next) => {
   res.locals.success_msg = req.flash('success_msg');
   res.locals.error_msg = req.flash('error_msg');
   res.locals.error = req.flash('error');
-  console.log(res.locals)
+  res.locals.user = req.user || null;
   next();
 })
+
+
+///////////////////////////////////////
+///////////// ROUTERS /////////////////
+///////////////////////////////////////
+
+// Use routes
+app.use('/ideas', ideas);
+app.use('/users', users);
 
 // Index router
 app.get('/', (req, res) => {
@@ -64,99 +91,13 @@ app.get('/about', (req, res) => {
   res.render('about');
 })
 
-// Idea index page
-app.get('/ideas', (req, res) => {
-  Idea.find({})
-    .sort({ date: 'desc' })
-    .then(ideas => {
-      res.render('ideas/index', {
-        ideas,
-      })
-    })
-})
 
-// Add idea form
-app.get('/ideas/add', (req, res) => {
-  res.render('ideas/add')
-});
-
-// Edit idea form
-app.get('/ideas/edit/:id', (req, res) => {
-  Idea.findOne({
-    _id: req.params.id
-  })
-    .then(idea => {
-      res.render('ideas/edit', {
-        idea
-      })
-    })
-});
-
-// Process form
-app.post('/ideas', (req, res) => {
-  let errors = [];
-  if (!req.body.title) {
-    errors.push({ text: 'Please, add a title.' });
-  }
-  if (!req.body.details) {
-    errors.push({ text: 'Please, add some details.' });
-  }
-  if (errors.length > 0) {
-    res.render('ideas/add', {
-      errors,
-      title: req.body.title,
-      details: req.body.details,
-    });
-  } else {
-    const newUser = {
-      title: req.body.title,
-      details: req.body.details,
-    }
-    new Idea(newUser)
-      .save()
-      .then(idea => {
-        req.flash('success_msg', 'Video idea added.');
-        res.redirect('/ideas');
-      })
-  }
-})
-
-// Edit form process
-app.put('/ideas/:id', (req, res) => {
-  Idea.findOne({
-    _id: req.params.id
-  })
-    .then(idea => {
-      idea.title = req.body.title;
-      idea.details = req.body.details;
-
-      idea.save()
-        .then(idea => {
-          res.redirect('/ideas');
-        })
-    })
-})
-
-// Delete idea
-app.delete('/ideas/:id', (req, res) => {
-  Idea.deleteOne({ _id: req.params.id })
-    .then(() => {
-      req.flash('success_msg', 'Video idea removed.');
-      res.redirect('/ideas');
-  });
-})
+////////////////////////////////////////////
+////////////// SERVER STUFF ////////////////
+////////////////////////////////////////////
 
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 })
-
-
-
-// // How middleware works
-// app.use((req,res,next) => {
-//   console.log(Date.now());
-//   req.name = 'Alberto';
-//   next();
-// })
