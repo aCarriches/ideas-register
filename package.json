@@ -1,13 +1,13 @@
 {
   "name": "vidjot",
   "version": "1.0.0",
-  "description": "App to register ideas",
+  "description": "App to create video ideas",
   "main": "app.js",
   "scripts": {
     "dev": "nodemon app",
     "start": "node app.js"
   },
-  "author": "Alberto Carriches",
+  "author": "Brad Traversy",
   "license": "MIT",
   "dependencies": {
     "bcryptjs": "^2.4.3",
