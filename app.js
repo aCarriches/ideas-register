@@ -84,9 +84,10 @@ app.use('/users', users);
 // Index router
 app.get('/', (req, res) => {
   const title = "Welcome";
-  res.render('index', {
-    title
-  });
+  res.send(process.env.NODE_ENV);
+  // res.render('index', {
+  //   title
+  // });
 })
 
 // About router
