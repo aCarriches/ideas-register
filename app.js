@@ -84,10 +84,9 @@ app.use('/users', users);
 // Index router
 app.get('/', (req, res) => {
   const title = "Welcome";
-  res.send(db.mongoURI);
-  // res.render('index', {
-  //   title
-  // });
+  res.render('index', {
+    title
+  });
 })
 
 // About router
