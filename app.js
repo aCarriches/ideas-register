@@ -14,11 +14,14 @@ const app = express();
 const ideas = require('./routes/ideas');
 const users = require('./routes/users');
 
+//DB config
+const db = require('./config/database');
+
 // Passport config
 require('./config/passport')(passport);
 
 // Connect to mongoose
-mongoose.connect('mongodb://localhost/vidjot-dev', {
+mongoose.connect(db.mongoURI, {
   useNewUrlParser: true
 })
   .then(() => console.log('MongoDB Connected...'))
